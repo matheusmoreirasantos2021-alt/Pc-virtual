@@ -1,0 +1,544 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PC Virtual</title>
+<style>
+:root {
+  --accent: #4da3ff;
+  --glass: rgba(20,25,38,.88);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  color: white;
+  font: 14px "Segoe UI", Arial, sans-serif;
+  background: #101827;
+}
+#desktop {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 70% 25%, #245a8a 0, transparent 45%),
+    radial-gradient(ellipse at 25% 80%, #4a2775 0, transparent 50%),
+    linear-gradient(135deg,#101827,#152d48 60%,#111827);
+}
+.desktop-icon {
+  width: 90px;
+  min-height: 85px;
+  padding: 10px 5px;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  user-select: none;
+}
+.desktop-icon:hover {
+  background: #ffffff20;
+  border-color: #ffffff40;
+}
+.desktop-icon .emoji {
+  display: block;
+  font-size: 32px;
+  margin-bottom: 7px;
+}
+#icons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 12px;
+  gap: 4px;
+}
+#taskbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--glass);
+  border-top: 1px solid #ffffff25;
+  backdrop-filter: blur(20px);
+  z-index: 1000;
+}
+.task-btn {
+  height: 42px;
+  min-width: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  background: transparent;
+  cursor: pointer;
+  font-size: 20px;
+}
+.task-btn:hover, .task-btn.active { background: #ffffff20; }
+#clock {
+  position: absolute;
+  right: 15px;
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.6;
+}
+#start-menu {
+  display: none;
+  position: absolute;
+  z-index: 1100;
+  bottom: 62px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(390px, calc(100vw - 20px));
+  padding: 20px;
+  border: 1px solid #ffffff25;
+  border-radius: 15px;
+  background: rgba(20,27,42,.97);
+  box-shadow: 0 15px 50px #0008;
+  backdrop-filter: blur(20px);
+}
+#start-menu h3 { margin: 0 0 15px; }
+.apps {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 8px;
+}
+.app-launch {
+  border: 0;
+  padding: 15px 5px;
+  border-radius: 8px;
+  background: #ffffff0d;
+  color: white;
+  cursor: pointer;
+}
+.app-launch:hover { background: #ffffff22; }
+.app-launch span { display: block; font-size: 27px; margin-bottom: 8px; }
+.window {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%,-50%);
+  width: min(650px, calc(100vw - 24px));
+  height: min(440px, calc(100vh - 100px));
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  background: #f4f6fa;
+  color: #172033;
+  border: 1px solid #ffffff70;
+  border-radius: 10px;
+  box-shadow: 0 20px 70px #0008;
+  overflow: hidden;
+}
+.titlebar {
+  height: 42px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+  background: #202c40;
+  cursor: move;
+  user-select: none;
+}
+.window-controls { display: flex; gap: 8px; }
+.window-controls button {
+  color: white; background: transparent; border: 0;
+  cursor: pointer; font-size: 18px; width: 25px;
+}
+.window-controls button:last-child:hover { background: #df394e; }
+.content {
+  flex: 1;
+  overflow: auto;
+  padding: 18px;
+}
+.content button, .content input, .content textarea {
+  font: inherit;
+}
+.content button {
+  padding: 8px 12px;
+  margin: 3px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+}
+.content input, .content textarea {
+  padding: 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  width: 100%;
+  margin: 5px 0;
+}
+.content textarea { min-height: 150px; resize: vertical; }
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
+  gap: 12px;
+}
+.file-item {
+  text-align: center;
+  padding: 15px 4px;
+  background: white;
+  border: 1px solid #e0e5ed;
+  border-radius: 8px;
+}
+.file-item span { display: block; font-size: 30px; margin-bottom: 8px; }
+#terminal {
+  background: #10151e;
+  color: #b8f7c2;
+  font: 13px Consolas, monospace;
+  padding: 12px;
+  height: 100%;
+  overflow: auto;
+}
+#terminal-output { white-space: pre-wrap; overflow-wrap: anywhere; }
+#terminal-form { display: flex; gap: 7px; margin-top: 10px; }
+#terminal-input {
+  background: #1b2431;
+  color: white;
+  border: 1px solid #455168;
+  flex: 1;
+  min-width: 0;
+}
+#terminal-form button { background: #29374b; color: white; border-color: #455168; }
+.note { color: #64748b; font-size: 12px; }
+@media(max-width:500px) {
+  #clock { right: 7px; font-size: 10px; }
+  #taskbar { justify-content: flex-start; padding-left: 8px; }
+  .task-btn { padding: 0 9px; }
+}
+</style>
+</head>
+<body>
+<div id="desktop">
+  <div id="icons">
+    <div class="desktop-icon" onclick="openApp('files')">
+      <span class="emoji">📁</span>Explorador
+    </div>
+    <div class="desktop-icon" onclick="openApp('notes')">
+      <span class="emoji">📝</span>Bloco de notas
+    </div>
+    <div class="desktop-icon" onclick="openApp('terminal')">
+      <span class="emoji">⌨️</span>Terminal
+    </div>
+    <div class="desktop-icon" onclick="openApp('about')">
+      <span class="emoji">💻</span>Meu PC
+    </div>
+  </div>
+
+  <div id="start-menu">
+    <h3>🪟 PC Virtual</h3>
+    <div class="apps">
+      <button class="app-launch" onclick="openApp('files')"><span>📁</span>Arquivos</button>
+      <button class="app-launch" onclick="openApp('notes')"><span>📝</span>Notas</button>
+      <button class="app-launch" onclick="openApp('terminal')"><span>⌨️</span>Terminal</button>
+      <button class="app-launch" onclick="openApp('browser')"><span>🌐</span>Navegador</button>
+      <button class="app-launch" onclick="openApp('calculator')"><span>🧮</span>Calculadora</button>
+      <button class="app-launch" onclick="openApp('about')"><span>💻</span>Sistema</button>
+    </div>
+  </div>
+
+  <div id="taskbar">
+    <button class="task-btn" title="Iniciar" onclick="toggleStart()">⊞</button>
+    <button class="task-btn" title="Explorador" onclick="openApp('files')">📁</button>
+    <button class="task-btn" title="Notas" onclick="openApp('notes')">📝</button>
+    <button class="task-btn" title="Terminal" onclick="openApp('terminal')">⌨️</button>
+    <div id="clock"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+let zIndex = 10;
+let windowCount = 0;
+const openWindows = new Map();
+
+function toggleStart() {
+  const menu = $("start-menu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+document.addEventListener("click", event => {
+  if (!event.target.closest("#start-menu") &&
+      !event.target.closest(".task-btn")) {
+    $("start-menu").style.display = "none";
+  }
+});
+
+function updateClock() {
+  const now = new Date();
+  $("clock").innerHTML =
+    now.toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}) +
+    "<br>" + now.toLocaleDateString("pt-BR");
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+function openApp(app) {
+  $("start-menu").style.display = "none";
+
+  if (openWindows.has(app)) {
+    const existing = openWindows.get(app);
+    existing.style.display = "flex";
+    existing.style.zIndex = ++zIndex;
+    return;
+  }
+
+  const names = {
+    files:"Explorador de arquivos",
+    notes:"Bloco de notas",
+    terminal:"Terminal",
+    browser:"Navegador",
+    calculator:"Calculadora",
+    about:"Sobre este PC"
+  };
+
+  const win = document.createElement("section");
+  win.className = "window";
+  win.style.zIndex = ++zIndex;
+  win.style.left = `${45 + (windowCount % 5) * 3}%`;
+  win.style.top = `${42 + (windowCount % 5) * 3}%`;
+  windowCount++;
+
+  win.innerHTML = `
+    <div class="titlebar">
+      <span>${names[app]}</span>
+      <div class="window-controls">
+        <button data-action="min" title="Minimizar">−</button>
+        <button data-action="close" title="Fechar">×</button>
+      </div>
+    </div>
+    <div class="content">${getAppContent(app)}</div>`;
+
+  $("desktop").appendChild(win);
+  openWindows.set(app, win);
+
+  win.addEventListener("mousedown", () => win.style.zIndex = ++zIndex);
+  win.querySelector('[data-action="close"]').onclick = () => {
+    win.remove();
+    openWindows.delete(app);
+  };
+  win.querySelector('[data-action="min"]').onclick = () => {
+    win.style.display = "none";
+  };
+
+  makeDraggable(win);
+
+  if (app === "notes") initNotes(win);
+  if (app === "terminal") initTerminal(win);
+  if (app === "calculator") initCalculator(win);
+  if (app === "browser") initBrowser(win);
+}
+
+function getAppContent(app) {
+  switch (app) {
+    case "files":
+      return `<h2>📁 Este PC</h2>
+        <div class="file-grid">
+          <div class="file-item"><span>📂</span>Documentos</div>
+          <div class="file-item"><span>🖼️</span>Imagens</div>
+          <div class="file-item"><span>🎵</span>Músicas</div>
+          <div class="file-item"><span>⬇️</span>Downloads</div>
+        </div>
+        <p class="note">Pastas demonstrativas. Nenhum arquivo real do computador é acessado.</p>`;
+    case "notes":
+      return `<h2>📝 Bloco de notas</h2>
+        <textarea id="notes-area" placeholder="Digite suas anotações..."></textarea>
+        <button id="save-note">Salvar neste navegador</button>
+        <button id="clear-note">Limpar</button>
+        <p id="note-status" class="note">As notas ficam no armazenamento local deste navegador.</p>`;
+    case "terminal":
+      return `<div id="terminal">
+        <div id="terminal-output">PC Virtual Terminal v1.0
+Digite "help" para ver os comandos disponíveis.
+
+</div>
+        <form id="terminal-form">
+          <span>&gt;</span>
+          <input id="terminal-input" autocomplete="off" autofocus aria-label="Comando">
+          <button type="submit">OK</button>
+        </form>
+      </div>`;
+    case "browser":
+      return `<h2>🌐 Abrir site</h2>
+        <p>Digite o endereço de um site público para abri-lo em outra aba.</p>
+        <form id="browser-form">
+          <input id="browser-url" placeholder="https://example.com" type="text">
+          <button type="submit">Abrir site</button>
+        </form>
+        <p class="note">Sites podem bloquear exibição dentro de janelas incorporadas; este app abre uma nova aba.</p>`;
+    case "calculator":
+      return `<h2>🧮 Calculadora</h2>
+        <input id="calc-display" value="0" readonly aria-label="Resultado">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr)">
+          ${["7","8","9","÷","4","5","6","×","1","2","3","−","C","0","=","+"].map(k =>
+            `<button data-key="${k}">${k}</button>`).join("")}
+        </div>`;
+    case "about":
+      return `<h2>💻 Sobre este PC</h2>
+        <p><b>Nome:</b> PC Virtual</p>
+        <p><b>Versão:</b> 1.0.0</p>
+        <p><b>Ambiente:</b> Aplicação web</p>
+        <p><b>Interface:</b> Desktop simulado</p>
+        <p><b>Armazenamento:</b> Local do navegador</p>
+        <hr>
+        <p>Este projeto simula uma área de trabalho. Não é uma máquina virtual de hardware nem executa programas Windows ou Linux.</p>`;
+    default: return "<p>Aplicativo não encontrado.</p>";
+  }
+}
+
+function makeDraggable(win) {
+  const bar = win.querySelector(".titlebar");
+  let startX, startY, startLeft, startTop, dragging = false;
+
+  bar.addEventListener("pointerdown", event => {
+    if (event.target.closest("button")) return;
+    dragging = true;
+    bar.setPointerCapture(event.pointerId);
+    const rect = win.getBoundingClientRect();
+    startX = event.clientX;
+    startY = event.clientY;
+    startLeft = rect.left;
+    startTop = rect.top;
+    win.style.transform = "none";
+    win.style.left = startLeft + "px";
+    win.style.top = startTop + "px";
+  });
+
+  bar.addEventListener("pointermove", event => {
+    if (!dragging) return;
+    const maxLeft = Math.max(0, window.innerWidth - win.offsetWidth);
+    const maxTop = Math.max(0, window.innerHeight - 100);
+    win.style.left = Math.max(0, Math.min(maxLeft,
+      startLeft + event.clientX - startX)) + "px";
+    win.style.top = Math.max(0, Math.min(maxTop,
+      startTop + event.clientY - startY)) + "px";
+  });
+
+  bar.addEventListener("pointerup", () => dragging = false);
+  bar.addEventListener("pointercancel", () => dragging = false);
+}
+
+function initNotes(win) {
+  const area = win.querySelector("#notes-area");
+  const status = win.querySelector("#note-status");
+  try { area.value = localStorage.getItem("pcvirtual-notes") || ""; }
+  catch (_) { status.textContent = "Armazenamento local indisponível."; }
+
+  win.querySelector("#save-note").onclick = () => {
+    try {
+      localStorage.setItem("pcvirtual-notes", area.value);
+      status.textContent = "Nota salva neste navegador!";
+    } catch (_) {
+      status.textContent = "Não foi possível salvar a nota.";
+    }
+  };
+  win.querySelector("#clear-note").onclick = () => {
+    area.value = "";
+  };
+}
+
+function initTerminal(win) {
+  const form = win.querySelector("#terminal-form");
+  const input = win.querySelector("#terminal-input");
+  const output = win.querySelector("#terminal-output");
+
+  const commands = {
+    help: () => "Comandos: help, date, time, whoami, ls, clear, about, echo TEXTO",
+    date: () => new Date().toLocaleDateString("pt-BR"),
+    time: () => new Date().toLocaleTimeString("pt-BR"),
+    whoami: () => "usuario@pc-virtual",
+    ls: () => "Documentos/  Imagens/  Músicas/  Downloads/",
+    about: () => "PC Virtual 1.0 — terminal demonstrativo, sem acesso ao sistema operacional.",
+    clear: () => { output.textContent = ""; return ""; }
+  };
+
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    const command = input.value.trim();
+    if (!command) return;
+
+    output.textContent += "> " + command + "\n";
+    const [name, ...args] = command.split(" ");
+    let result;
+
+    if (name === "echo") result = args.join(" ");
+    else if (commands[name]) result = commands[name]();
+    else result = `Comando não encontrado: ${name}`;
+
+    if (result) output.textContent += result + "\n";
+    output.textContent += "\n";
+    input.value = "";
+    win.querySelector("#terminal").scrollTop = 999999;
+  });
+}
+
+function initCalculator(win) {
+  let current = "0";
+  let stored = null;
+  let operator = null;
+  let reset = false;
+  const display = win.querySelector("#calc-display");
+
+  function render() { display.value = current; }
+
+  win.querySelectorAll("[data-key]").forEach(button => {
+    button.onclick = () => {
+      const key = button.dataset.key;
+
+      if (/^\d$/.test(key)) {
+        current = reset || current === "0" ? key : current + key;
+        reset = false;
+      } else if (key === "C") {
+        current = "0"; stored = null; operator = null; reset = false;
+      } else if (key === "=") {
+        if (operator && stored !== null) {
+          const a = stored, b = Number(current);
+          let result;
+          if (operator === "+") result = a + b;
+          if (operator === "−") result = a - b;
+          if (operator === "×") result = a * b;
+          if (operator === "÷") result = b === 0 ? NaN : a / b;
+          current = Number.isFinite(result) ? String(result) : "Erro";
+          stored = null; operator = null; reset = true;
+        }
+      } else {
+        stored = Number(current);
+        operator = key;
+        reset = true;
+      }
+      render();
+    };
+  });
+}
+
+function initBrowser(win) {
+  win.querySelector("#browser-form").onsubmit = event => {
+    event.preventDefault();
+    let address = win.querySelector("#browser-url").value.trim();
+    if (!address) return;
+    if (!/^https?:\/\//i.test(address)) address = "https://" + address;
+
+    try {
+      const url = new URL(address);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        throw new Error("Protocolo inválido");
+      }
+      window.open(url.href, "_blank", "noopener,noreferrer");
+    } catch (_) {
+      alert("Digite um endereço válido.");
+    }
+  };
+}
+</script>
+</body>
+</html>
